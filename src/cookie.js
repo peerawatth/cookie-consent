@@ -1,5 +1,8 @@
 "use strict"
 
+import axios from "axios"
+import defaultOptions from "./default_options"
+
 const DEFAULT_STATUS = null
 const DEFAULT_ACCEPTED_CATEGORIES = []
 export default class Cookie {
@@ -9,29 +12,62 @@ export default class Cookie {
   }
 
   dump() {
+    const domain = location.hostname
+    const categories = this.acceptedCategories
     const serialized = JSON.stringify({
       status: this.status,
-      acceptedCategories: this.acceptedCategories
+      acceptedCategories: this.acceptedCategories.map(v => v.name)
     })
 
-    let cookieStr = this.cookieOptions.name + "=" + serialized
+    categories.forEach(group => this.consent(group))
 
+    this.set({ ...defaultOptions.cookie, domain }, serialized)
+  }
+
+  async consent(group) {
+    const { form_id, message_id, project_id } = group
+    const source = window.location.origin
+    const subject_id = ''
+    
+    const url = `https://cmp-api.jfin.network/api/v1/consent`
+    const data = {
+      project_id,
+      message_id,
+      subject_id: subject_id,
+      form_id,
+      source,
+      retention_until: "",
+      email: "",
+      note1: "",
+      note2: "",
+      signature: ""
+    }
+
+    const response = (await axios.post(url, data)).data
+    console.log(response)
+    // return response
+  }
+
+  set(cookie, serialized) {
+    let cookieStr = cookie.name + "=" + serialized
+  
     const expDate = new Date()
-    const expDays = this.cookieOptions.expiryDays
+    const expDays = cookie.expiryDays
     const expHours = (typeof expDays !== "number"  ? 365 : expDays ) * 24
     expDate.setHours(expDate.getHours() + expHours)
     cookieStr += "; expires=" + expDate.toUTCString()
 
     cookieStr += "; path=/"
-    cookieStr += (this.cookieOptions.domain ? "; domain=" + this.cookieOptions.domain : "")
-    cookieStr += (this.cookieOptions.secure ? "; secure" : "")
-    cookieStr += (this.cookieOptions.sameSite ? "; SameSite=" +  this.cookieOptions.sameSite : "")
+    cookieStr += (cookie.domain ? "; domain=" + cookie.domain : "")
+    cookieStr += (cookie.secure ? "; secure" : "")
+    cookieStr += (cookie.sameSite ? "; SameSite=" +  cookie.sameSite : "")
 
     document.cookie = cookieStr
   }
 
   load() {
-    const existingConsent = this._getCookie(this.cookieOptions.name)
+    const existingConsent = this._getCookie('cookie_consent')
+    
     if(existingConsent){
       const parsed = JSON.parse(existingConsent)
       this.status = parsed.status

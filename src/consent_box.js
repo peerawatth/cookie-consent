@@ -46,6 +46,14 @@ export default class ConsentBox extends Observable {
     elemBuilder.innerHTML = consentBoxHtml
     this.container = elemBuilder.firstChild
 
+    if(this.options.background) {
+      this._firstByClass("cc-box").style.background = this.options.background
+    }
+
+    if(this.options.color) {
+      this.container.style.color = this.options.color
+    }
+
     this._firstByClass("cc-title").innerHTML = this.options.title;
     this._firstByClass("cc-description").innerHTML = this.options.description;
     this._firstByClass("cc-btn-accept-all").innerHTML = this.options.buttons.acceptAll;
@@ -66,15 +74,16 @@ export default class ConsentBox extends Observable {
     const categoriesElem = this._firstByClass("cc-categories")
 
     for (let catKey in this.categories) {
+      let key = catKey.toLowerCase().replace(/\s+/g, '-').trim()
       const category = this.categories[catKey]
 
       const categoryElem = document.createElement("div")
-      categoryElem.setAttribute("data-category", catKey)
+      categoryElem.setAttribute("data-category", key)
       categoryElem.setAttribute("role", "checkbox")
       categoryElem.setAttribute("tabindex", "0")
 
       const categoryLbl = document.createElement("span")
-      categoryLbl.setAttribute("data-category", catKey)
+      categoryLbl.setAttribute("data-category", key)
       categoryLbl.setAttribute("role", "link")
       categoryLbl.setAttribute("tabindex", "0")
       const lblNode = document.createTextNode(category.label)
