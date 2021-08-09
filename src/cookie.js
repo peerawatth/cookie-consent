@@ -19,33 +19,53 @@ export default class Cookie {
       acceptedCategories: this.acceptedCategories.map(v => v.name)
     })
 
-    categories.forEach(group => this.consent(group))
+    const subjectId = this.generateSubjectId()
+
+    categories.forEach(group => this.consent(group, subjectId))
 
     this.set({ ...defaultOptions.cookie, domain }, serialized)
   }
 
-  async consent(group) {
-    const { form_id, message_id, project_id } = group
-    const source = window.location.origin
-    const subject_id = ''
-    
-    const url = `https://cmp-api.jfin.network/api/v1/consent`
-    const data = {
-      project_id,
-      message_id,
-      subject_id: subject_id,
-      form_id,
-      source,
-      retention_until: "",
-      email: "",
-      note1: "",
-      note2: "",
-      signature: ""
+  generateSubjectId() {
+    let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let charactersLength = characters.length
+    let result = ''
+
+    for (let index = 0; index < 3; index++) {
+      if(index > 0) {
+        result += '-'
+      }
+
+      for (let i = 0; i < 10; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength))
+      }
     }
 
-    const response = (await axios.post(url, data)).data
-    console.log(response)
-    // return response
+    return result
+  }
+
+  async consent(group, subject_id) {
+    try {
+      const { form_id, message_id, project_id, site:source } = group
+      
+      const url = `https://cmp-api.jfin.network/api/v1/consent`
+      const data = {
+        project_id,
+        message_id,
+        subject_id,
+        form_id,
+        source,
+        retention_until: "",
+        email: "",
+        note1: "",
+        note2: "",
+        signature: ""
+      }
+
+      await axios.post(url, data)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   set(cookie, serialized) {

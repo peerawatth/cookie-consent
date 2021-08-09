@@ -32,11 +32,15 @@ export default class CookieConsent extends Observable {
     let description = "Click “Accept” to enable us to use cookies to personalize this site. Customize your preferences in your Cookie Settings or click “Reject” if you do not want us to use cookies for this purpose. Learn more in our <a href=\"/cookies\">Cookie Notice</a>."
 
     const getSite = async () => {
-      const uuid = document.querySelector('script[data-domain-script]').getAttribute('data-domain-script')
-      const url = `https://cmp-api.jfin.network/api/v1/site/${uuid}`
-      const response = await axios.get(url)
-
-      return response.data.data.result
+      try {
+        const uuid = document.querySelector('script[data-domain-script]').getAttribute('data-domain-script')
+        const url = `https://cmp-api.jfin.network/api/v1/site/${uuid}`
+        const response = await axios.get(url)
+  
+        return response.data.data.result
+      } catch (error) {
+        console.log(error)
+      }
     }
 
     getSite().then((value) => {
@@ -44,6 +48,8 @@ export default class CookieConsent extends Observable {
       description = value.site.description
 
       const categories = {}
+      const site = value.site.site
+      const project_id = value.site.projectId
 
       value.groups.forEach(element => {
         const title = element.title.toLowerCase().replace(/\s+/g, '-').trim()
@@ -56,7 +62,8 @@ export default class CookieConsent extends Observable {
           label: element.title,
           mandatory: false,
           message_id: element.message_id,
-          project_id: element.project_id
+          project_id,
+          site
         }
       })
 
@@ -79,7 +86,8 @@ export default class CookieConsent extends Observable {
             form_id: this.options.categories[v].form_id,
             message_id: this.options.categories[v].message_id,
             project_id: this.options.categories[v].project_id,
-            name: v
+            name: v,
+            site: this.options.categories[v].site,
           }
         })
 
@@ -98,7 +106,8 @@ export default class CookieConsent extends Observable {
             form_id: this.options.categories[v].form_id,
             message_id: this.options.categories[v].message_id,
             project_id: this.options.categories[v].project_id,
-            name: v
+            name: v,
+            site: this.options.categories[v].site,
           }
         })
         
